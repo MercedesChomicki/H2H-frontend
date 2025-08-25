@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
@@ -11,6 +11,9 @@ const ChatComponent = ({ senderId, recipientId }) => {
     const socket = new SockJS('/api/ws');
     const client = new Client({
       webSocketFactory: () => socket,
+      connectHeaders: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
       onConnect: () => {
         const channelId = generateChannelId(senderId, recipientId);
         client.subscribe(`/topic/private-chat/${channelId}`, (msg) => {
