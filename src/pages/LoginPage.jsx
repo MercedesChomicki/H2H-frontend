@@ -1,5 +1,5 @@
-// src/pages/LoginPage.jsx
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 
 const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState('');
@@ -8,9 +8,9 @@ const LoginPage = ({ onLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await onLogin(email, password); // esta función se la pasás desde App
+      await onLogin(email, password);
     } catch (error) {
-      alert("Error de inicio de sesión");
+      toast.error("Error de inicio de sesión");
     }
   };
 

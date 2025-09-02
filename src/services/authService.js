@@ -52,9 +52,19 @@ export const register = async ({ name, city, email, password }) => {
     body: JSON.stringify({ name, city, email, password }),
   });
 
-  if (!response.ok) throw new Error('Registro inválido');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    const message = errorData?.message || 'El usuario ya está registrado';
 
-  return await response.json(); // Te devuelve el usuario creado
+    if (response.status === 409) {
+      // 👇 ahora lanzamos con code para que RegisterPage lo detecte
+      throw { status: 409, code: "EMAIL_EXISTS", message };
+    }
+
+    throw new Error(message);
+  }
+
+  return await response.json(); // Devuelve el usuario creado
 };
 
 export const login = async (email, password) => {
@@ -65,10 +75,15 @@ export const login = async (email, password) => {
     body: JSON.stringify({ email, password }),
   });
 
-  if (!response.ok) throw new Error('Login inválido');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    // Si el backend devuelve { error: "Contraseña incorrecta" }
+    const message = errorData?.error || "Error al iniciar sesión";
+    throw new Error(message);
+  }
 
   const data = await response.json();
-  localStorage.setItem('token', data.token);
   console.log('Email:', data.email);
   console.log('Rol:', data.role);
+  return data;
 };

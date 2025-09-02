@@ -1,59 +1,91 @@
-import { useState, useEffect, useRef } from 'react';
-import SockJS from 'sockjs-client';
-import { Client } from '@stomp/stompjs';
+import { useState, useEffect } from "react";
+import { connectWebSocket, sendMessage } from "../services/chatService";
 
-const ChatComponent = ({ senderId, recipientId }) => {
-  const [message, setMessage] = useState('');
-  const [chatMessages, setChatMessages] = useState([]);
-  const stompClientRef = useRef(null); // 👈 esto guarda la instancia
+function ChatComponent({ senderId, recipientId }) {
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const socket = new SockJS('/api/ws');
-    const client = new Client({
-      webSocketFactory: () => socket,
-      connectHeaders: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      onConnect: () => {
-        const channelId = generateChannelId(senderId, recipientId);
-        client.subscribe(`/topic/private-chat/${channelId}`, (msg) => {
-          const received = JSON.parse(msg.body);
-          setChatMessages((prev) => [...prev, received]);
-        });
-      },
-    });
+    // Usar el email del localStorage como identificador
+    const email = localStorage.getItem('email');
+    if (!email) {
+      console.error('No se encontró email en localStorage');
+      return;
+    }
 
-    stompClientRef.current = client; // 👈 guardamos la instancia
-    client.activate();
+    const client = connectWebSocket(email, (msg) => {
+      setMessages(prev => [...prev, msg]);
+    });
+    
+    // Verificar conexión
+    const checkConnection = setInterval(() => {
+      if (client && client.connected) {
+        setIsConnected(true);
+        clearInterval(checkConnection);
+      }
+    }, 1000);
 
     return () => {
-      client.deactivate();
+      clearInterval(checkConnection);
+      if (client) {
+        client.deactivate();
+      }
     };
-  }, [senderId, recipientId]);
+  }, [senderId]);
 
-  const generateChannelId = (u1, u2) => (u1 < u2 ? `${u1}-${u2}` : `${u2}-${u1}`);
+  const handleSend = () => {
+    if (message.trim() === "" || !isConnected) return;
 
-  const sendMessage = () => {
-    if (stompClientRef.current && stompClientRef.current.connected) {
-      stompClientRef.current.publish({
-        destination: '/app/chat',
-        body: JSON.stringify({ senderId, recipientId, content: message }),
-      });
-      setMessage('');
-    }
+    // Obtener el email del destinatario (por ahora usar el recipientId como email)
+    const recipientEmail = recipientId === 'userA' ? 'a@email.com' : 'b@email.com';
+
+    // Enviar al backend
+    sendMessage(recipientEmail, message);
+
+    // Agregar mensaje local optimista
+    setMessages((prev) => [...prev, { from: localStorage.getItem('email'), text: message }]);
+    setMessage("");
   };
 
   return (
     <div>
-      <div>
-        {chatMessages.map((msg, idx) => (
-          <p key={idx}><b>{msg.senderId}:</b> {msg.content}</p>
+      <div style={{ marginBottom: '10px' }}>
+        {isConnected ? (
+          <span style={{ color: 'green' }}>🟢 Conectado</span>
+        ) : (
+          <span style={{ color: 'red' }}>🔴 Conectando...</span>
+        )}
+      </div>
+      
+      <div
+        style={{
+          border: "1px solid #ccc",
+          padding: "10px",
+          height: "200px",
+          overflowY: "auto",
+          marginBottom: "10px",
+        }}
+      >
+        {messages.map((m, i) => (
+          <div key={i} style={{ textAlign: m.from === localStorage.getItem('email') ? "right" : "left" }}>
+            <b>{m.from === localStorage.getItem('email') ? "Yo" : m.from}:</b> {m.text}
+          </div>
         ))}
       </div>
-      <input value={message} onChange={(e) => setMessage(e.target.value)} />
-      <button onClick={sendMessage}>Enviar</button>
+
+      <input
+        type="text"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="Escribí tu mensaje..."
+        disabled={!isConnected}
+      />
+      <button onClick={handleSend} disabled={!isConnected}>
+        Enviar
+      </button>
     </div>
   );
-};
+}
 
 export default ChatComponent;
