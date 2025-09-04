@@ -1,20 +1,16 @@
-import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
 let client;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 
-const WEBSOCKET_URL = 'http://localhost:8080/api/ws';
+const WEBSOCKET_URL = 'ws://localhost:8080/api/ws';
 
 export const connectWebSocket = (userId, onMessageReceived) => {
-  console.log(userId);  
   console.log('🔌 Conectando a WebSocket a través del gateway:', WEBSOCKET_URL);
   
-  const socket = new SockJS(WEBSOCKET_URL);
-  
   client = new Client({
-    webSocketFactory: () => socket,
+    brokerURL: WEBSOCKET_URL, // 👈 conecta directo, sin SockJS
     connectHeaders: {
       Authorization: `Bearer ${localStorage.getItem('token')}`
     },
@@ -22,7 +18,7 @@ export const connectWebSocket = (userId, onMessageReceived) => {
       console.log('✅ Conectado al STOMP WebSocket a través del gateway');
       reconnectAttempts = 0;
 
-      // Suscribirse a mensajes privados usando el email como identificador
+      // Suscribirse a mensajes privados usando el email
       const email = localStorage.getItem('email');
       if (email) {
         client.subscribe(`/user/${email}/queue/messages`, (msg) => {
