@@ -12,19 +12,24 @@ function App() {
   const [chatWithId, setChatWithId] = useState(null);
   const [isRegistering, setIsRegistering] = useState(false);
 
+   // ⚡ Lista de usuarios "simulados" (luego puede venir de tu backend)
+  const users = [
+    { id: "florencia@gmail.com", name: "Florencia" },
+    { id: "lucasbarrientos@gmail.com", name: "Lucas" },
+    { id: "camilarodriguez@gmail.com", name: "Camila" },
+  ];
+
   const handleLogin = async (email, password) => {
     try {
       const data = await login(email, password); 
       
       // Guardar en localStorage lo necesario
       localStorage.setItem('token', data.token);
-      localStorage.setItem('userId', data.userId);
+      localStorage.setItem('username', email);
       localStorage.setItem('email', email);
 
-      setCurrentUserId(data.userId);
-    
-      // Por ahora, para testear, podés hardcodear con quién chatear:
-      setChatWithId("idDeOtroUsuario");
+      setCurrentUserId(email);
+      setChatWithId(null);
     } catch (error) {
         toast.error(error.message || "Error al iniciar sesión");
     }
@@ -93,11 +98,33 @@ function App() {
       <ToastContainer position="top-right" autoClose={3000} />
       <h2>Chat App</h2>
       <p>
-        Estás conectado como: <b>{currentUserId}</b> <br />
-        Chateando con: <b>{chatWithId}</b>
+        Estás conectado como: <b>{currentUserId}</b>
       </p>
+
+      {/* 🔹 Selector de usuarios */}
+      <h3>Elegí con quién chatear:</h3>
+      <ul>
+        {users
+          .filter(u => u.id !== localStorage.getItem('email')) // no mostrarse a sí mismo
+          .map(user => (
+            <li key={user.id}>
+              <button onClick={() => setChatWithId(user.id)}>
+                {user.name}
+              </button>
+            </li>
+        ))}
+      </ul>
+
       <hr />
-      <ChatComponent senderId={currentUserId} recipientId={chatWithId} />
+
+      {chatWithId ? (
+        <>
+          <p>Chateando con: <b>{chatWithId}</b></p>
+          <ChatComponent senderId={currentUserId} recipientId={chatWithId} />
+        </>
+      ) : (
+        <p>⚡ Elegí un usuario para empezar a chatear</p>
+      )}
     </div>
   );
 }

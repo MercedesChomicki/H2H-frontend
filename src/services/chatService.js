@@ -21,7 +21,7 @@ export const connectWebSocket = (userId, onMessageReceived) => {
       // Suscribirse a mensajes privados usando el email
       const email = localStorage.getItem('email');
       if (email) {
-        client.subscribe(`/user/${email}/queue/messages`, (msg) => {
+        client.subscribe(`/user/queue/messages`, (msg) => {
           try {
             const message = JSON.parse(msg.body);
             console.log('📨 Mensaje recibido:', message);

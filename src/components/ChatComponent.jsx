@@ -38,7 +38,7 @@ function ChatComponent({ senderId, recipientId }) {
     if (message.trim() === "" || !isConnected) return;
 
     // Obtener el email del destinatario (por ahora usar el recipientId como email)
-    const recipientEmail = recipientId === 'userA' ? 'a@email.com' : 'b@email.com';
+    const recipientEmail = recipientId;
 
     // Enviar al backend
     sendMessage(recipientEmail, message);
