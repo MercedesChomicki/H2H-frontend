@@ -1,10 +1,9 @@
 import { Client } from '@stomp/stompjs';
+import { WEBSOCKET_URL } from '../config';
 
 let client;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
-
-const WEBSOCKET_URL = 'ws://localhost:8080/api/ws';
 
 export const connectWebSocket = (userId, onMessageReceived) => {
   console.log('🔌 Conectando a WebSocket a través del gateway:', WEBSOCKET_URL);
@@ -17,23 +16,19 @@ export const connectWebSocket = (userId, onMessageReceived) => {
     onConnect: () => {
       console.log('✅ Conectado al STOMP WebSocket a través del gateway');
       reconnectAttempts = 0;
-
-      // Suscribirse a mensajes privados usando el email
-      const email = localStorage.getItem('email');
-      if (email) {
-        client.subscribe(`/user/queue/messages`, (msg) => {
-          try {
-            const message = JSON.parse(msg.body);
-            console.log('📨 Mensaje recibido:', message);
-            onMessageReceived({
-                from: message.senderId,
-                text: message.content
-            });
-          } catch (error) {
-            console.error('Error parsing message:', error);
-          }
-        });
-      }
+      
+      client.subscribe(`/user/queue/messages`, (msg) => {
+        try {
+          const message = JSON.parse(msg.body);
+          console.log('📨 Mensaje recibido:', message);
+          onMessageReceived({
+              from: message.senderId, // UUID
+              text: message.content
+          });
+        } catch (error) {
+          console.error('Error parsing message:', error);
+        }
+      });
     },
     onStompError: (frame) => {
       console.error('⚠️ STOMP error:', frame);
@@ -66,7 +61,7 @@ export const sendMessage = (recipientId, content) => {
   }
 
   const message = {
-    senderId: localStorage.getItem('email'),
+    senderId: localStorage.getItem('userId'),
     recipientId,
     content,
   };

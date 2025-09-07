@@ -7,18 +7,16 @@ function ChatComponent({ senderId, recipientId }) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Usar el email del localStorage como identificador
-    const email = localStorage.getItem('email');
-    if (!email) {
-      console.error('No se encontró email en localStorage');
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      console.error('No se encontró userId en localStorage');
       return;
     }
 
-    const client = connectWebSocket(email, (msg) => {
+    const client = connectWebSocket(userId, (msg) => {
       setMessages(prev => [...prev, msg]);
     });
     
-    // Verificar conexión
     const checkConnection = setInterval(() => {
       if (client && client.connected) {
         setIsConnected(true);
@@ -28,62 +26,51 @@ function ChatComponent({ senderId, recipientId }) {
 
     return () => {
       clearInterval(checkConnection);
-      if (client) {
-        client.deactivate();
-      }
+      if (client) client.deactivate();
     };
   }, [senderId]);
 
   const handleSend = () => {
     if (message.trim() === "" || !isConnected) return;
-
-    // Obtener el email del destinatario (por ahora usar el recipientId como email)
     const recipientEmail = recipientId;
 
-    // Enviar al backend
     sendMessage(recipientEmail, message);
 
-    // Agregar mensaje local optimista
     setMessages((prev) => [...prev, { from: localStorage.getItem('email'), text: message }]);
     setMessage("");
   };
 
   return (
-    <div>
-      <div style={{ marginBottom: '10px' }}>
-        {isConnected ? (
-          <span style={{ color: 'green' }}>🟢 Conectado</span>
-        ) : (
-          <span style={{ color: 'red' }}>🔴 Conectando...</span>
-        )}
+    <div className="chat-container">
+      <div className="chat-header">
+        Chateando con: {recipientId}
+      </div>
+
+      <div className="status">
+        <span className={`dot ${isConnected ? "green" : "red"}`}></span>
+        {isConnected ? "Conectado" : "Conectando..."}
       </div>
       
-      <div
-        style={{
-          border: "1px solid #ccc",
-          padding: "10px",
-          height: "200px",
-          overflowY: "auto",
-          marginBottom: "10px",
-        }}
-      >
+      <div className="messages">
         {messages.map((m, i) => (
-          <div key={i} style={{ textAlign: m.from === localStorage.getItem('email') ? "right" : "left" }}>
-            <b>{m.from === localStorage.getItem('email') ? "Yo" : m.from}:</b> {m.text}
+          <div key={i} className={`message ${m.from === senderId ? "own" : "other"}`}>
+            {m.from === senderId ? "Yo: " : `${m.from}: `}{m.text}
           </div>
         ))}
       </div>
 
-      <input
-        type="text"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder="Escribí tu mensaje..."
-        disabled={!isConnected}
-      />
-      <button onClick={handleSend} disabled={!isConnected}>
-        Enviar
-      </button>
+      <div className="input-area">
+        <input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Escribí tu mensaje..."
+          disabled={!isConnected}
+        />
+        <button onClick={handleSend} disabled={!isConnected}>
+          Enviar
+        </button>
+      </div>
     </div>
   );
 }

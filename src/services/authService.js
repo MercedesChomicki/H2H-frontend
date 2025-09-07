@@ -68,7 +68,7 @@ export const register = async ({ name, city, email, password }) => {
 };
 
 export const login = async (email, password) => {
-  const response = await fetch('http://localhost:8080/api/users/auth/login', {
+  const response = await fetch('http://localhost:8080/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
