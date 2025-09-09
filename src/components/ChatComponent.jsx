@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { connectWebSocket, sendMessage } from "../services/chatService";
 
-function ChatComponent({ senderId, recipientId }) {
+function ChatComponent({ senderId, recipientId, recipientName }) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -32,18 +32,17 @@ function ChatComponent({ senderId, recipientId }) {
 
   const handleSend = () => {
     if (message.trim() === "" || !isConnected) return;
-    const recipientEmail = recipientId;
 
-    sendMessage(recipientEmail, message);
+    sendMessage(recipientId, message);
 
-    setMessages((prev) => [...prev, { from: localStorage.getItem('email'), text: message }]);
+    setMessages((prev) => [...prev, { from: senderId, fromName: localStorage.getItem('name'), text: message }]);
     setMessage("");
   };
 
   return (
     <div className="chat-container">
       <div className="chat-header">
-        Chateando con: {recipientId}
+        Chateando con {recipientName}
       </div>
 
       <div className="status">
@@ -54,7 +53,7 @@ function ChatComponent({ senderId, recipientId }) {
       <div className="messages">
         {messages.map((m, i) => (
           <div key={i} className={`message ${m.from === senderId ? "own" : "other"}`}>
-            {m.from === senderId ? "Yo: " : `${m.from}: `}{m.text}
+            {m.from === senderId ? "Yo: " : `${m.fromName}: `}{m.text}
           </div>
         ))}
       </div>
@@ -66,6 +65,7 @@ function ChatComponent({ senderId, recipientId }) {
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Escribí tu mensaje..."
           disabled={!isConnected}
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
         <button onClick={handleSend} disabled={!isConnected}>
           Enviar

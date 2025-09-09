@@ -22,7 +22,8 @@ export const connectWebSocket = (userId, onMessageReceived) => {
           const message = JSON.parse(msg.body);
           console.log('📨 Mensaje recibido:', message);
           onMessageReceived({
-              from: message.senderId, // UUID
+              from: message.senderId,
+              fromName: message.senderUsername,
               text: message.content
           });
         } catch (error) {

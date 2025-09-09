@@ -11,6 +11,7 @@ import { fetchUsers } from "./services/userService";
 
 function App() {
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentUserName, setCurrentUserName] = useState(null);
   const [chatWithId, setChatWithId] = useState(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [users, setUsers] = useState([]);
@@ -20,14 +21,17 @@ function App() {
       const data = await login(email, password); 
       localStorage.setItem('token', data.token);
 
-      // extraer userId del JWT
+      // extraer userId y name del JWT
       const decoded = jwtDecode(data.token);
       const userId = decoded.sub; // 👈 este es el UUID del backend
+      const name = decoded.name || email;
 
       localStorage.setItem('userId', userId);
       localStorage.setItem('email', email); // opcional
+      localStorage.setItem('name', decoded.name || email);
 
       setCurrentUserId(userId);
+      setCurrentUserName(name);
       setChatWithId(null);
     } catch (error) {
         toast.error(error.message || "Error al iniciar sesión");
@@ -110,11 +114,13 @@ function App() {
     <div style={{ padding: '20px', textAlign: 'center' }}>
       <ToastContainer position="top-right" autoClose={3000} />
       <h2>Chat App</h2>
-      <p>Estás conectado como: <b>{currentUserId}</b></p>
+      <p>Estás conectado como <b>{currentUserName}</b></p>
 
       <h3>Elegí con quién chatear:</h3>
       <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '1rem' }}>
-        {users.map(user => (
+        {users
+          .filter(user => user.name !== 'Service Account')
+          .map(user => (
             <button key={user.id} onClick={() => setChatWithId(user.id)}>
               {user.name || user.email}
             </button>
@@ -122,7 +128,10 @@ function App() {
       </div>
 
       {chatWithId ? (
-        <ChatComponent senderId={currentUserId} recipientId={chatWithId} />
+        <ChatComponent 
+          senderId={currentUserId} 
+          recipientId={chatWithId} 
+          recipientName={users.find(u => u.id === chatWithId)?.name}/>
       ) : (
         <p>⚡ Elegí un usuario para empezar a chatear</p>
       )}
