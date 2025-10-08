@@ -1,49 +1,4 @@
 // src/services/authService.js
-// Add this function to test the endpoints
-export const testEndpoints = async () => {
-  try {
-    // Test health endpoint
-    const healthResponse = await fetch('http://localhost:8080/api/users/auth/health');
-    console.log('Health response:', await healthResponse.text());
-    
-    // Test database connection
-    const dbResponse = await fetch('http://localhost:8080/api/users/auth/db-test');
-    console.log('DB response:', await dbResponse.text());
-    
-    // Test registration without validation
-    const testResponse = await fetch('http://localhost:8080/api/users/auth/test-register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ name: 'Test User', city: 'Test City', email: 'test@example.com', password: 'password123' }),
-    });
-    console.log('Test registration response:', await testResponse.text());
-    
-    // Test registration without validation (new endpoint)
-    const uniqueEmail = 'test' + Date.now() + '@example.com';
-    const noValidationResponse = await fetch('http://localhost:8080/api/users/auth/register-no-validation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ name: 'Test User', city: 'Test City', email: uniqueEmail, password: 'password123' }),
-    });
-    console.log('No validation registration response:', await noValidationResponse.text());
-    
-    // Test the actual register endpoint with unique email
-    const registerResponse = await fetch('http://localhost:8080/api/users/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ name: 'Test User', city: 'Test City', email: uniqueEmail + '2', password: 'password123' }),
-    });
-    console.log('Register response status:', registerResponse.status);
-    console.log('Register response:', await registerResponse.text());
-    
-  } catch (error) {
-    console.error('Test failed:', error);
-  }
-};
-
 export const register = async ({ name, city, email, password }) => {
   const response = await fetch('http://localhost:8080/api/users/auth/register', {
     method: 'POST',
@@ -86,4 +41,30 @@ export const login = async (email, password) => {
   console.log('Email:', data.email);
   console.log('Rol:', data.role);
   return data;
+};
+
+export const forgotPassword = async (email) => {
+  const response = await fetch(`http://localhost:8080/api/auth/forgot-password?email=${encodeURIComponent(email)}`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Error al enviar correo de recuperación");
+  }
+  return await response.text();
+};
+
+export const resetPassword = async (token, newPassword) => {
+  const response = await fetch("http://localhost:8080/api/auth/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, newPassword }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Error al restablecer contraseña");
+  }
+  return await response.text();
 };

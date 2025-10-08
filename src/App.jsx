@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import ChatComponent from './components/ChatComponent';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import { login, register, testEndpoints } from './services/authService';
+import { login, register } from './services/authService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { jwtDecode } from "jwt-decode";
@@ -73,16 +73,6 @@ function App() {
     }
   };
 
-  const handleTestEndpoints = async () => {
-    try {
-      await testEndpoints();
-      toast.success("✅ Endpoints funcionando correctamente");
-    } catch (error) {
-      console.error('Test failed:', error);
-      toast.error("❌ Test de endpoints fallido");
-    }
-  };
-
   if (!currentUserId) {
     return (
       <>
@@ -97,13 +87,6 @@ function App() {
             <LoginPage onLogin={handleLogin} />
             <p>¿No tenés cuenta?</p>
             <button onClick={() => setIsRegistering(true)}>Ir a Registro</button>
-            <br />
-            <button 
-              onClick={handleTestEndpoints} 
-              style={{ marginTop: '10px', backgroundColor: '#ff6b6b' }}
-            >
-              Test Endpoints
-            </button>
           </div>
         )}
       </>

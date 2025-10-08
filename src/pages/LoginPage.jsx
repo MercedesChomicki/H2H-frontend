@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -37,6 +38,9 @@ const LoginPage = ({ onLogin }) => {
           />
         </div>
         <button type="submit" style={{ marginTop: '20px' }}>Ingresar</button>
+        <p style={{ marginTop: "10px" }}>
+          <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
+        </p>
       </form>
     </div>
   );
