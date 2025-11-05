@@ -22,15 +22,21 @@ function App() {
       localStorage.setItem('token', data.token);
 
       // extraer userId y name del JWT
-      const decoded = jwtDecode(data.token);
-      const userId = decoded.sub; // 👈 este es el UUID del backend
-      const name = decoded.name || email;
+      // const decoded = jwtDecode(data.token);
+      // const userId = decoded.sub;
+      // const name = decoded.name || email;
 
-      localStorage.setItem('userId', userId);
-      localStorage.setItem('email', email); // opcional
-      localStorage.setItem('name', decoded.name || email);
+      // localStorage.setItem('userId', userId);
+      // localStorage.setItem('email', email); 
+      // localStorage.setItem('name', decoded.name || email);
 
-      setCurrentUserId(userId);
+      const { id, name, email: userEmail } = data.profile;
+
+      localStorage.setItem('userId', id);
+      localStorage.setItem('email', userEmail); 
+      localStorage.setItem('name', name);
+
+      setCurrentUserId(id);
       setCurrentUserName(name);
       setChatWithId(null);
     } catch (error) {

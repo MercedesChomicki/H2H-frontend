@@ -1,6 +1,6 @@
 // src/services/authService.js
 export const register = async ({ name, city, email, password }) => {
-  const response = await fetch('http://localhost:8080/api/users/auth/register', {
+  const response = await fetch('http://localhost:8080/api/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -38,8 +38,8 @@ export const login = async (email, password) => {
   }
 
   const data = await response.json();
-  console.log('Email:', data.email);
-  console.log('Rol:', data.role);
+  console.log('Email:', data.profile.email);
+  console.log('Rol:', data.profile);
   return data;
 };
 
