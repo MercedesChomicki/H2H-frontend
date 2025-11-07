@@ -17,3 +17,22 @@ export const fetchUsers = async () => {
     throw error;
   }
 };
+
+/**
+ * Obtiene un usuario por ID
+ */
+export const fetchUserById = async (id) => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await axios.get(`${USER_SERVICE_URL}/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data; // usuario {id, name, email}
+  } catch (error) {
+    console.error(`Error al obtener usuario ${id}:`, error);
+    return null; // devolvemos null para manejar gracefully
+  }
+};

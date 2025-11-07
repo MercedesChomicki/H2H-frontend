@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { connectWebSocket, sendMessage } from "../services/chatService";
+import { fetchUserById } from "../services/userService";
 
-function ChatComponent({ senderId, recipientId, recipientName }) {
+function ChatComponent({ senderId, recipientId, recipientName, usersById, setUsersById }) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -13,8 +14,29 @@ function ChatComponent({ senderId, recipientId, recipientName }) {
       return;
     }
 
-    const client = connectWebSocket(userId, (msg) => {
-      setMessages(prev => [...prev, msg]);
+    const client = connectWebSocket(userId, async (msg) => {
+      // 🟦 1. Resolver nombre localmente
+      const senderName = 
+        msg.from === senderId 
+          ? localStorage.getItem('name') 
+          : usersById[msg.from] || msg.fromName || "Unknown";
+
+      // 🟨 2. Si el nombre es Unknown pero no es mi propio mensaje → buscarlo del backend
+      if (senderName === "Unknown" && msg.from !== senderId) {
+        try {
+          const user = await fetchUserById(msg.from);  // llamada al backend
+          if (user) {
+            senderName = user.name;
+
+            // 🔥 Cachear usuario para no volver a pedirlo
+            setUsersById(prev => ({ ...prev, [user.id]: user.name }));
+          }
+        } catch (e) {
+          console.warn("No se pudo obtener el usuario:", msg.from);
+        }
+      }
+      // 🟩 3. Guardar el mensaje ya con nombre correcto
+      setMessages(prev => [...prev, { ...msg, fromName: senderName }]);
     });
     
     const checkConnection = setInterval(() => {
@@ -28,7 +50,7 @@ function ChatComponent({ senderId, recipientId, recipientName }) {
       clearInterval(checkConnection);
       if (client) client.deactivate();
     };
-  }, [senderId]);
+  }, [senderId, usersById]);
 
   const handleSend = () => {
     if (message.trim() === "" || !isConnected) return;

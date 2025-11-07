@@ -72,7 +72,10 @@ export const sendMessage = (recipientId, content) => {
   try {
     client.publish({
       destination: '/app/chat',
-      body: JSON.stringify(message)
+      body: JSON.stringify(message),
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
     });
     return true;
   } catch (error) {

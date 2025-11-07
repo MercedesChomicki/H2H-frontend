@@ -6,7 +6,6 @@ import RegisterPage from './pages/RegisterPage';
 import { login, register } from './services/authService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { jwtDecode } from "jwt-decode";
 import { fetchUsers } from "./services/userService";
 
 function App() {
@@ -15,20 +14,12 @@ function App() {
   const [chatWithId, setChatWithId] = useState(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [users, setUsers] = useState([]);
+  const [usersById, setUsersById] = useState({});
 
   const handleLogin = async (email, password) => {
     try {
       const data = await login(email, password); 
       localStorage.setItem('token', data.token);
-
-      // extraer userId y name del JWT
-      // const decoded = jwtDecode(data.token);
-      // const userId = decoded.sub;
-      // const name = decoded.name || email;
-
-      // localStorage.setItem('userId', userId);
-      // localStorage.setItem('email', email); 
-      // localStorage.setItem('name', decoded.name || email);
 
       const { id, name, email: userEmail } = data.profile;
 
@@ -50,8 +41,11 @@ function App() {
     const loadUsers = async () => {
       try {
         const data = await fetchUsers();
-        // Filtrar al usuario logueado
-        setUsers(data.filter(u => u.id !== currentUserId));
+        const filteredUsers = [...new Map(data.map(u => [u.id, u])).values()].filter(u => u.id !== currentUserId);
+        // Eliminar duplicados por id
+        setUsers(filteredUsers);
+        // Crear diccionario
+        setUsersById(Object.fromEntries(filteredUsers.map(u => [u.id, u.name])));
       } catch (err) {
         console.error("No se pudieron cargar los usuarios:", err);
       }
@@ -110,7 +104,13 @@ function App() {
         {users
           .filter(user => user.name !== 'Service Account')
           .map(user => (
-            <button key={user.id} onClick={() => setChatWithId(user.id)}>
+            <button 
+              key={user.id} 
+              onClick={() => {
+                console.log("🟦 Click en usuario: {}", user);
+                setChatWithId(user.id)
+              }}
+            >
               {user.name || user.email}
             </button>
         ))}
@@ -120,7 +120,9 @@ function App() {
         <ChatComponent 
           senderId={currentUserId} 
           recipientId={chatWithId} 
-          recipientName={users.find(u => u.id === chatWithId)?.name}/>
+          recipientName={users.find(u => u.id === chatWithId)?.name}
+          usersById={usersById}
+        />
       ) : (
         <p>⚡ Elegí un usuario para empezar a chatear</p>
       )}
